@@ -23,6 +23,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.View.OnTouchListener;
+import android.view.Display;
 import android.widget.RelativeLayout;
 import com.facebook.ads.*;
 import com.facebook.ads.NativeAd.Image;
@@ -49,9 +50,9 @@ public class FacebookAdPlugin extends GenericAdPlugin {
 	
 	public class FlexNativeAd {
 		public String adId;
-		public int x, y, w, h;
+		public int x, y, w, h, adSX, adSY, adSW, adSH;
 		public NativeAd	ad;
-		public View view;
+		public ViewGroup view;
 		public View tracking;
 	};
 	
@@ -124,7 +125,11 @@ public class FacebookAdPlugin extends GenericAdPlugin {
             int y = inputs.optInt(2);
             int w = inputs.optInt(3);
             int h = inputs.optInt(4);
-            this.setNativeAdClickArea(adid, x, y, w, h);
+			int adSX = inputs.optInt(5);
+			int adSY = inputs.optInt(6);
+			int adSW = inputs.optInt(7);
+			int adSH = inputs.optInt(8);
+            this.setNativeAdClickArea(adid, x, y, w, h, adSX, adSY, adSW, adSH);
             result = new PluginResult(Status.OK);
             
     	} else {
@@ -140,27 +145,57 @@ public class FacebookAdPlugin extends GenericAdPlugin {
 	  	Log.d(LOGTAG, "createNativeAd: " + adId);
 	    final Activity activity = getActivity();
 	    activity.runOnUiThread(new Runnable(){
+
+			public int pixelsToDp(int pixels) {
+				final float scale = getActivity().getResources().getDisplayMetrics().density;
+				//int pixels = (int) (dps * scale + 0.5f);
+				return Math.round(pixels * scale);
+			}
+
             @Override
             public void run() {
             	if(nativeAds.containsKey(adId)) {
             		removeNativeAd(adId);
             	}
-            	
-            	if(layout == null) {
-            		layout = new RelativeLayout(getActivity());
-            		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
-                            RelativeLayout.LayoutParams.MATCH_PARENT,
-                            RelativeLayout.LayoutParams.MATCH_PARENT);
-            		ViewGroup parentView = (ViewGroup) getView().getRootView();
-            		parentView.addView(layout, params);
-            	}
-            	
-            	FlexNativeAd unit = new FlexNativeAd();
+
+
+
+				if(layout == null) {
+					layout = new RelativeLayout(getActivity());
+					RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
+							RelativeLayout.LayoutParams.MATCH_PARENT,
+							100);
+					ViewGroup parentView = (ViewGroup) getView().getRootView();
+					parentView.addView(layout, params);
+				}
+
+
+				DisplayMetrics displayMetrics = new DisplayMetrics();
+				getActivity().getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+				int height = displayMetrics.heightPixels;
+
+				DisplayMetrics metrics = cordova.getActivity().getResources().getDisplayMetrics();
+				int offset = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 65, metrics);
+
+				height -= offset;
+
+				layout.getLayoutParams().height = height;
+
+            	final FlexNativeAd unit = new FlexNativeAd();
             	unit.adId = adId;
             	unit.x = unit.y = 0;
 				unit.w = unit.h = 4;
             	
-            	unit.view = new View(getActivity());
+            	unit.view = new ViewGroup(getActivity()) {
+					@Override
+					protected void onLayout(boolean changed, int l, int t, int r, int b) {
+						final int count = getChildCount();
+						for (int i = 0; i < count; i++) {
+							View child = getChildAt(i);
+							child.layout(unit.adSX, unit.adSY, unit.adSX + unit.adSW, unit.adSY + unit.adSH);
+						}
+					}
+				};
 				unit.tracking = new View(getActivity());
 				layout.addView(unit.tracking, new RelativeLayout.LayoutParams(unit.w, unit.h));
 				layout.addView(unit.view, new RelativeLayout.LayoutParams(unit.w, unit.h));
@@ -209,6 +244,10 @@ public class FacebookAdPlugin extends GenericAdPlugin {
 				unit.view.setOnTouchListener(t);
 
             	unit.ad = new NativeAd(getActivity(), adId);
+				AdChoicesView adChoicesView = new AdChoicesView(getActivity(), unit.ad);
+
+				unit.view.addView(adChoicesView);
+
             	unit.ad.setAdListener(new AdListener(){
             	    @Override
             	    public void onError(Ad ad, AdError error) {
@@ -237,7 +276,7 @@ public class FacebookAdPlugin extends GenericAdPlugin {
             }
 	    });
     }
-    
+
     public void fireNativeAdLoadEvent(Ad ad) {
         Iterator<String> it = nativeAds.keySet().iterator();
         while(it.hasNext()) {
@@ -300,7 +339,7 @@ public class FacebookAdPlugin extends GenericAdPlugin {
         	}
         }
     }
-    
+
     public void removeNativeAd(final String adId) {
 	    final Activity activity = getActivity();
 	    activity.runOnUiThread(new Runnable(){
@@ -324,9 +363,15 @@ public class FacebookAdPlugin extends GenericAdPlugin {
             }
 	    });
     }
-    
+
+	public int pixelsToDp(int pixels) {
+		final float scale = getActivity().getResources().getDisplayMetrics().density;
+		//int pixels = (int) (dps * scale + 0.5f);
+		return Math.round(pixels * scale);
+	}
+
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-	public void setNativeAdClickArea(final String adId, int x, int y, int w, int h) {
+	public void setNativeAdClickArea(final String adId, int x, int y, int w, int h, int adSX, int adSY, int adSW, int adSH) {
 		final FlexNativeAd unit = nativeAds.get(adId);
 		if(unit != null) {
 	        DisplayMetrics metrics = cordova.getActivity().getResources().getDisplayMetrics();
@@ -334,6 +379,13 @@ public class FacebookAdPlugin extends GenericAdPlugin {
 			unit.y = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, y, metrics);
 			unit.w = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, w, metrics);
 			unit.h = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, h, metrics);
+
+
+			unit.adSX = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, adSX, metrics);
+			unit.adSY = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, adSY, metrics);
+			unit.adSW = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, adSW, metrics);
+			unit.adSH = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, adSH, metrics);
+
 
         	View rootView = getView().getRootView();
         	int offsetRootView[] = {0,0}, offsetMainView[] = {0,0};
@@ -351,6 +403,16 @@ public class FacebookAdPlugin extends GenericAdPlugin {
 	        			unit.view.setTop(unit.y);
 	        			unit.view.setRight(unit.x+unit.w);
 	        			unit.view.setBottom(unit.y+unit.h);
+						final int count = unit.view.getChildCount();
+	        			if (count > 0) {
+							for (int i = 0; i < count; i++) {
+								View child = unit.view.getChildAt(i);
+								child.setLeft(unit.adSX);
+								child.setTop(unit.adSY);
+								child.setRight(unit.adSX+unit.adSW);
+								child.setBottom(unit.adSY+unit.adSH);
+							}
+						}
 	        		}
 					if(unit.tracking != null) {
 						unit.tracking.setLeft(unit.x);
