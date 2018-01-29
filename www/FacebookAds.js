@@ -41,7 +41,7 @@ fbanExport.AD_POSITION = {
 	*/
 fbanExport.setOptions = function(options, successCallback, failureCallback) {
 		if(typeof options === 'object') {
-			exec( successCallback, failureCallback, 'FacebookAds', 'setOptions', [options] );
+			cordova.exec( successCallback, failureCallback, 'FacebookAds', 'setOptions', [options] );
 		} else {
 			if(typeof failureCallback === 'function') {
 				failureCallback('options should be specified.');
@@ -62,26 +62,26 @@ fbanExport.createBanner = function(args, successCallback, failureCallback) {
 	} else if(typeof args === 'string') {
 		options = { adId: args };
 	}
-	exec( successCallback, failureCallback, 'FacebookAds', 'createBanner', [ options ] );
+	cordova.exec( successCallback, failureCallback, 'FacebookAds', 'createBanner', [ options ] );
 };
 
 fbanExport.removeBanner = function(successCallback, failureCallback) {
-	exec( successCallback, failureCallback, 'FacebookAds', 'removeBanner', [] );
+	cordova.exec( successCallback, failureCallback, 'FacebookAds', 'removeBanner', [] );
 };
 
 fbanExport.hideBanner = function(successCallback, failureCallback) {
-	exec( successCallback, failureCallback, 'FacebookAds', 'hideBanner', [] );
+	cordova.exec( successCallback, failureCallback, 'FacebookAds', 'hideBanner', [] );
 };
 
 fbanExport.showBanner = function(position, successCallback, failureCallback) {
 	if(typeof position === 'undefined') position = 0;
-	exec( successCallback, failureCallback, 'FacebookAds', 'showBanner', [ position ] );
+	cordova.exec( successCallback, failureCallback, 'FacebookAds', 'showBanner', [ position ] );
 };
 
 fbanExport.showBannerAtXY = function(x, y, successCallback, failureCallback) {
 	if(typeof x === 'undefined') x = 0;
 	if(typeof y === 'undefined') y = 0;
-	exec( successCallback, failureCallback, 'FacebookAds', 'showBannerAtXY', [{x:x, y:y}] );
+	cordova.exec( successCallback, failureCallback, 'FacebookAds', 'showBannerAtXY', [{x:x, y:y}] );
 };
 
 fbanExport.prepareInterstitial = function(args, successCallback, failureCallback) {
@@ -97,23 +97,23 @@ fbanExport.prepareInterstitial = function(args, successCallback, failureCallback
 	} else if(typeof args === 'string') {
 		options = { adId: args };
 	}
-	exec( successCallback, failureCallback, 'FacebookAds', 'prepareInterstitial', [ args ] );
+	cordova.exec( successCallback, failureCallback, 'FacebookAds', 'prepareInterstitial', [ args ] );
 };
 
 fbanExport.showInterstitial = function(successCallback, failureCallback) {
-	exec( successCallback, failureCallback, 'FacebookAds', 'showInterstitial', [] );
+	cordova.exec( successCallback, failureCallback, 'FacebookAds', 'showInterstitial', [] );
 };
 
 fbanExport.createNativeAd = function(adId, successCallback, failureCallback) {
-	exec( successCallback, failureCallback, 'FacebookAds', 'createNativeAd', [adId] );
+	cordova.exec( successCallback, failureCallback, 'FacebookAds', 'createNativeAd', [adId] );
 };
 
 fbanExport.removeNativeAd = function(adId, successCallback, failureCallback) {
-	exec( successCallback, failureCallback, 'FacebookAds', 'removeNativeAd', [adId] );
+	cordova.exec( successCallback, failureCallback, 'FacebookAds', 'removeNativeAd', [adId] );
 };
 
 fbanExport.setNativeAdClickArea = function(adId, x, y, w, h, ax, ay, aw, ah, successCallback, failureCallback) {
-	exec( successCallback, failureCallback, 'FacebookAds', 'setNativeAdClickArea', [adId,x,y,w,h,ax,ay,aw,ah] );
+	cordova.exec( successCallback, failureCallback, 'FacebookAds', 'setNativeAdClickArea', [adId,x,y,w,h,ax,ay,aw,ah] );
 };
 
 
