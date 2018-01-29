@@ -122,5 +122,4 @@ cordova.define("cordova-plugin-facebookads.FacebookAds", function(require, expor
 	module.exports = fbanExport;
 	
 	
-	});
-	
+});
